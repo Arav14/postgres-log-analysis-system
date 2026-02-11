@@ -32,28 +32,12 @@ SELECT *
 FROM (
     SELECT 
         a.app_name,
-        u.user_name,
+        u.username,
         COUNT(l.log_id) AS total_logs,
         RANK() OVER (PARTITION BY a.app_name ORDER BY COUNT(l.log_id) DESC) AS rank_position
     FROM logs l
     JOIN users u ON l.user_id = u.user_id
     JOIN applications a ON l.app_id = a.app_id
-    GROUP BY a.app_name, u.user_name
+    GROUP BY a.app_name, u.username
 ) ranked
 WHERE rank_position <= 3;
-
-
-# Application-wise Error Percentage with Application Owner
-SELECT 
-    a.app_name,
-    a.owner_name,
-    COUNT(*) AS total_logs,
-    SUM(CASE WHEN l.log_level = 'ERROR' THEN 1 ELSE 0 END) AS total_errors,
-    ROUND(
-        (SUM(CASE WHEN l.log_level = 'ERROR' THEN 1 ELSE 0 END) * 100.0 
-        / COUNT(*)), 2
-    ) AS error_percentage
-FROM logs l
-JOIN applications a ON l.app_id = a.app_id
-GROUP BY a.app_name, a.owner_name
-ORDER BY error_percentage DESC;
